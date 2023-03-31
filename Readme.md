@@ -1,0 +1,2 @@
+1. All the individual folders contain their own readme.md file . See them to get the detail information about the applications
+2. Copy the app.apk to your android device.Install it using your package manager to get the SignChatter mobile application
