@@ -37,3 +37,5 @@ This model is capable of recognizing and translating the signs of the following 
 'about', 'accident', 'africa', 'afternoon', 'again', 'all', 'always', 'animal', 'any', 'apple',
 'approve', 'argue', 'arrive', 'aunt', 'baby', 'back', 'bake', 'balance', 'bald', 'ball', 
 'banana', 'bar', 'basement', 'basketball', 'bath', 'bathroom', 'bear', 'beard', 'bed', 'bedroom'
+
+Note : Please use 0.3 as the argument for dropout layers when trying any of the 30 Classes models
