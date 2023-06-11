@@ -17,7 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import android.speech.tts.TextToSpeech;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -36,6 +36,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Locale;
 
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
@@ -47,6 +48,7 @@ import retrofit2.Response;
 public class HomeFragment extends Fragment {
 
     private FragmentHomeBinding binding;
+    private TextToSpeech textToSpeech;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -67,7 +69,7 @@ public class HomeFragment extends Fragment {
             ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.CAMERA}, 200);
         } else {
             Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
-            takeVideoIntent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 5);
+            takeVideoIntent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 8);
             takeVideoIntent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, CamcorderProfile.QUALITY_480P);
             if (takeVideoIntent.resolveActivity(getActivity().getPackageManager()) != null) {
                 someActivityResultLauncher.launch(takeVideoIntent);
@@ -91,9 +93,8 @@ public class HomeFragment extends Fragment {
                     Intent data = result.getData();
                     Uri uri = data.getData();
                     long durationMillis = getVideoDuration(uri);
-                    if (durationMillis < 2 * 1000) {
-                        Toast.makeText(getContext(), "Video length can't be less than 2 seconds!", Toast.LENGTH_LONG).show();
-
+                    if (durationMillis < 2*1000 || durationMillis > 8*1000) {
+                        Toast.makeText(getContext(), "Video length should be between 2 and 8 seconds", Toast.LENGTH_LONG).show();
                         return;
                     }
                     convertToBytes(uri);
@@ -124,9 +125,9 @@ public class HomeFragment extends Fragment {
         Dialog d = showDialog();
         GifImageView gifImageView = d.findViewById(R.id.ivWait);
         TextView tv = d.findViewById(R.id.tv_result);
-        APIInterface apiInterface = APIClient.getClient().create(APIInterface.class);
+        APIInterface APIInterface = APIClient.getClient().create(APIInterface.class);
         RequestBody requestBody = RequestBody.create(videoBytes, MediaType.parse("application/octet-stream"));
-        Call<PredictionModel> predictionModelCall = apiInterface.uploadVideo(requestBody);
+        Call<PredictionModel> predictionModelCall = APIInterface.uploadVideo(requestBody);
         predictionModelCall.enqueue(new Callback<>() {
             @Override
             public void onResponse(@NonNull Call<PredictionModel> call, @NonNull Response<PredictionModel> response) {
@@ -136,6 +137,8 @@ public class HomeFragment extends Fragment {
                     String res = model.Prediction;
                     gifImageView.setImageResource(R.drawable.feedback);
                     tv.setText(res);
+                    convertTextToSpeech(res);
+
                 }
             }
 
@@ -178,6 +181,36 @@ public class HomeFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+    private void convertTextToSpeech(String text) {
+        if (textToSpeech == null) {
+            textToSpeech = new TextToSpeech(requireContext(), new TextToSpeech.OnInitListener() {
+                @Override
+                public void onInit(int status) {
+                    if (status == TextToSpeech.SUCCESS) {
+                        int result = textToSpeech.setLanguage(Locale.US);
+                        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                            Toast.makeText(requireContext(), "Language not supported", Toast.LENGTH_SHORT).show();
+                        } else {
+                            textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+                        }
+                    } else {
+                        Toast.makeText(requireContext(), "Initialization failed", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        } else {
+            textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null);
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (textToSpeech != null) {
+            textToSpeech.stop();
+            textToSpeech.shutdown();
+        }
     }
 }
 

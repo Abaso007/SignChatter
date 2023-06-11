@@ -17,7 +17,7 @@ public class APIClient {
                 .writeTimeout(30, TimeUnit.SECONDS).build();
 
         retrofit = new Retrofit.Builder()
-                .baseUrl("http://109.205.182.203:5420/")
+                .baseUrl("http://194.163.183.60:19472/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(client)
                 .build();
