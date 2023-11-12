@@ -14,7 +14,7 @@ files = os.listdir(video_dataset)
 eligible_videos = []
 
 for file in files:
-    cap = cv2.VideoCapture(video_dataset + '/' + file)
+    cap = cv2.VideoCapture(f'{video_dataset}/{file}')
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     if frame_count >= 50:
         print(file,frame_count)
@@ -41,7 +41,7 @@ for dict_instance in json_data:
 
     for video in videos:
         id = video['video_id']
-        id = id + '.mp4'
+        id = f'{id}.mp4'
         if id in eligible_videos:
             videos_to_add.append(id)
             count = count + 1

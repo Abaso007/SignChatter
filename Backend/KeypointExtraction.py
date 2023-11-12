@@ -185,8 +185,6 @@ def get_arrays():
 
 
 
-if __name__ == '__main__':
-    pass
     # action_division(actions)
     # get_arrays()
     # actions = os.listdir(r'D:\ASL\NewDataSet')

@@ -19,7 +19,7 @@ def getOriginalFrames(actions, images_dataset, dataset_videos):
 
         for video in videos:
             if video in all_videos:
-                cap = cv2.VideoCapture(dataset_videos + '/' + video)
+                cap = cv2.VideoCapture(f'{dataset_videos}/{video}')
                 to_capture = 50
                 frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
                 toskip = math.floor(frame_count / to_capture)
@@ -31,29 +31,27 @@ def getOriginalFrames(actions, images_dataset, dataset_videos):
                 while (cap.isOpened()):
                     if len(os.listdir(os.path.join(images_dataset, name, video, '1'))) == 50:
                         break
+                    ret, frame = cap.read()
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
+                    frame_num = frame_num + toskip
+                    if ret == True:
+
+                        # Display the resulting frame
+                        # cv2.imshow('Frame', frame)
+
+                        os.chdir(os.path.join(images_dataset, name, video, '1'))
+                        if os.path.exists(f'{str(count)}.jpg'):
+                            os.remove(f'{str(count)}.jpg')
+                        cv2.imwrite(f'{str(count)}.jpg', frame)
+                        count = count + 1
+
+                                                # Press Q on keyboard to  exit
+                                                # if cv2.waitKey(25) & 0xFF == ord('q'):
+                                                #     break
+
                     else:
-                        ret, frame = cap.read()
-                        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
-                        frame_num = frame_num + toskip
-                        if ret == True:
-
-                            # Display the resulting frame
-                            # cv2.imshow('Frame', frame)
-
-                            os.chdir(os.path.join(images_dataset, name, video, '1'))
-                            if os.path.exists((str(count) + '.jpg')):
-                                os.remove((str(count) + '.jpg'))
-                            cv2.imwrite((str(count) + '.jpg'),
-                                        frame)  # must change directory first otherwise imwrite won't work
-                            count = count + 1
-
-                            # Press Q on keyboard to  exit
-                            # if cv2.waitKey(25) & 0xFF == ord('q'):
-                            #     break
-
-                        else:
-                            cap.release()
-                            break
+                        cap.release()
+                        break
                 cap.release()
                 cv2.destroyAllWindows()
 
@@ -141,16 +139,16 @@ def SkewFrames(angle, images_dataset):
 # data augmentation function to extract and rescale frames
 def ResizeFrames(size, images_dataset, dataset_videos):
     folder = 0
-    if size == 50:
-        folder = 11
-    elif size == 150:
+    if size == 150:
         folder = 12
     elif size == 200:
         folder = 13
     elif size == 250:
         folder = 14
-    if size == 300:
+    elif size == 300:
         folder = 15
+    elif size == 50:
+        folder = 11
     folder = str(folder)
 
     all_videos = os.listdir(dataset_videos)  # list of actual videos
@@ -174,30 +172,29 @@ def ResizeFrames(size, images_dataset, dataset_videos):
                 while (cap.isOpened()):
                     if len(os.listdir(os.path.join(images_dataset, name, video, folder))) == 50:
                         break
-                    else:
-                        ret, frame = cap.read()
-                        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
-                        frame_num = frame_num + toskip
-                        if ret:
-                            # Display the resulting frame
-                            new_height = int(frame.shape[0] * size / 100)
-                            new_width = int(frame.shape[1] * size / 100)
-                            new_dimensions = (new_width, new_height)
-                            output = cv2.resize(frame, new_dimensions)
-                            # cv2.imshow('Frame', output)
-                            os.chdir(os.path.join(images_dataset, name, video, folder))
-                            if os.path.exists((str(count) + '.jpg')):
-                                os.remove((str(count) + '.jpg'))
-                            cv2.imwrite((str(count) + '.jpg'), output)
+                    ret, frame = cap.read()
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
+                    frame_num = frame_num + toskip
+                    if ret:
+                        # Display the resulting frame
+                        new_height = int(frame.shape[0] * size / 100)
+                        new_width = int(frame.shape[1] * size / 100)
+                        new_dimensions = (new_width, new_height)
+                        output = cv2.resize(frame, new_dimensions)
+                        # cv2.imshow('Frame', output)
+                        os.chdir(os.path.join(images_dataset, name, video, folder))
+                        if os.path.exists(f'{str(count)}.jpg'):
+                            os.remove(f'{str(count)}.jpg')
+                        cv2.imwrite(f'{str(count)}.jpg', output)
 
-                            count = count + 1
+                        count = count + 1
 
-                            if cv2.waitKey(25) & 0xFF == ord('q'):
-                                break
-                            # Break the loop
-                        else:
-                            cap.release()
+                        if cv2.waitKey(25) & 0xFF == ord('q'):
                             break
+                                                # Break the loop
+                    else:
+                        cap.release()
+                        break
                 cap.release()
                 cv2.destroyAllWindows()
 
@@ -210,12 +207,10 @@ def SkewFramesCombo(angle, inputImg):
         rotpoint = (w // 2, h // 2)
         rotmat = cv2.getRotationMatrix2D(rotpoint, angle, 1.0)
         dim = (w, h)
-        newFrame = cv2.warpAffine(img, rotmat, dim)
-        return newFrame
-
-        # cv2.imshow('Frame', newFrame)
-        # if cv2.waitKey(25) & 0xFF == ord('q'):
-        #     break
+        return cv2.warpAffine(img, rotmat, dim)
+            # cv2.imshow('Frame', newFrame)
+            # if cv2.waitKey(25) & 0xFF == ord('q'):
+            #     break
     except AttributeError:
         print('AttributeError in SkewFramesCombo func')
         return inputImg
@@ -226,27 +221,33 @@ def ResizeSkewCombo(size, categories, images_dataset, dataset_videos):
     # all_videos = os.listdir(dataset_videos)  # list of actual videos
 
     folder = 0
-    if size == 50:
-        folder = 16
-    elif size == 150:
+    if size == 150:
         folder = 24
     elif size == 200:
         folder = 32
     elif size == 250:
         folder = 40
-    if size == 300:
+    elif size == 300:
         folder = 48
+    elif size == 50:
+        folder = 16
     print('actions: ', categories)
 
+    to_capture = 50
     for name in categories:
-        print("Thread ", threading.get_native_id(), " with size arg ", str(size),
-              " executing ResizeSkewCombo function, now in class: ", name)
+        print(
+            "Thread ",
+            threading.get_native_id(),
+            " with size arg ",
+            size,
+            " executing ResizeSkewCombo function, now in class: ",
+            name,
+        )
 
         selected_videos = os.listdir(os.path.join(images_dataset, name))
         for video in selected_videos:
 
             cap = cv2.VideoCapture(os.path.join(dataset_videos, video))
-            to_capture = 50
             frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
             toskip = math.floor(frame_count / to_capture)
             if toskip == 0:
@@ -271,11 +272,11 @@ def ResizeSkewCombo(size, categories, images_dataset, dataset_videos):
                             continue
                         newOutput = SkewFramesCombo(angles[i], output)
                         os.chdir(os.path.join(images_dataset, name, video, str(folder + i)))
-                        if os.path.exists((str(count) + '.jpg')):
-                            os.remove((str(count) + '.jpg'))
-                            # continue
-                        cv2.imwrite((str(count) + '.jpg'), newOutput)
-                        # cv2.imshow('Frame', newOutput)
+                        if os.path.exists(f'{str(count)}.jpg'):
+                            os.remove(f'{str(count)}.jpg')
+                                                    # continue
+                        cv2.imwrite(f'{str(count)}.jpg', newOutput)
+                                            # cv2.imshow('Frame', newOutput)
 
                     count = count + 1
                     if cv2.waitKey(25) & 0xFF == ord('q'):
@@ -316,25 +317,6 @@ def Augmentation5(size, actions, images_dataset, dataset_videos):
 
 dataset_videos = r'D:\WLASL2000'  # orginal WLASL dataset videos
 images_dataset = r'D:\ASL\NewDataSet'  # eligible words/classes
-
-# original
-# actions = os.listdir(images_dataset)
-# length = math.floor(len(actions) / 8)
-#
-# first = actions[:length]
-# second = actions[length:length * 2]
-# third = actions[length * 2:length * 3]
-# fourth = actions[length * 3:length * 4]
-# fifth = actions[length * 4:length * 5]
-# sixth = actions[length * 5:length * 6]
-# seventh = actions[length * 6:length * 7]
-# eighth = actions[length * 7:]
-
-
-
-
-if __name__ == '__main__':
-    pass
     # p1 = multiprocessing.Process(target=Augmentation1, args=(first, images_dataset, dataset_videos,))
     # p1.start()
     # p2 = multiprocessing.Process(target=Augmentation1, args=(second, images_dataset, dataset_videos,))
