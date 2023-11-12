@@ -6,13 +6,13 @@ import multiprocessing
 
 # smaller function to sort files before concatenation
 def sort_files(frames):
-    finalFrames = []
-    for i in range(len(frames)):
-        finalFrames.append(int(frames[i].replace('.jpg.npy', '')))
+    finalFrames = [
+        int(frames[i].replace('.jpg.npy', '')) for i in range(len(frames))
+    ]
     finalFrames.sort()
 
     for j in range(len(finalFrames)):
-        finalFrames[j] = str(finalFrames[j]) + '.jpg.npy'
+        finalFrames[j] = f'{str(finalFrames[j])}.jpg.npy'
     return finalFrames
 
 
@@ -21,8 +21,7 @@ def concat(actions, name):
     data_path = r"D:/ASL/NewKeyPoints"
     npy_path = f"E:/60_classes_sorted_concat/{name}"
     video_list = []
-    i = 1
-    for action in actions:
+    for i, action in enumerate(actions, start=1):
         videos = os.listdir(os.path.join(data_path, action))
         for video in videos:
             augs = os.listdir(os.path.join(data_path, action, video))
@@ -44,7 +43,6 @@ def concat(actions, name):
                 video_list.append(img)
         print(os.getpid(), ' completed action: ', action)
         print('iteration: ', i)
-        i += 1
     X = np.array(video_list)
     np.save(npy_path, X)
 
@@ -58,8 +56,7 @@ def labels():
         videos = os.listdir(os.path.join(os.getcwd(), action))
         for video in videos:
             augs = os.listdir(os.path.join(os.getcwd(), action, video))
-            for aug in augs:
-                labels.append(label_map[action])
+            labels.extend(label_map[action] for _ in augs)
     Y = np.array(labels)
     np.save(r"E:\25FramesArray\all_labels", Y)
 
